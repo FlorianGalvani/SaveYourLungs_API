@@ -1,0 +1,1 @@
+cd ./migrations; rm *.php;cd ../; bin/console d:d:drop --force ; bin/console d:d:c ; bin/console m:mi ; bin/console d:m:mi ; bin/console d:f:l 

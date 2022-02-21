@@ -2,20 +2,26 @@ version: '3'
 
 services:
 ###> doctrine/doctrine-bundle ###
+  web:
+    image: "apache:${PHP_VERSION}"
+    restart: 'always'
+    depends_on:
+      - database
+    ports:
+      - '8080:80'
+    links:
+      - database
   database:
-    image: postgres:${POSTGRES_VERSION:-13}-alpine
+    image: "mariadb:${MARIADB_VERSION}"
+    restart: 'always'
+    volumes: 
+      - "/var/lib/mysql/data:${MARIADB_DATA_DIR}"
+      - "/var/lib/mysql/logs:${MARIADB_LOG_DIR}"
+      - /var/docker/mariadb/conf:/etc/mysql
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-app}
-      # You should definitely change the password in production
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMe}
-      POSTGRES_USER: ${POSTGRES_USER:-symfony}
-    volumes:
-      - db-data:/var/lib/postgresql/data:rw
-      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/db/data:/var/lib/postgresql/data:rw
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
 ###< doctrine/doctrine-bundle ###
 
-volumes:
-###> doctrine/doctrine-bundle ###
-  db-data:
-###< doctrine/doctrine-bundle ###
