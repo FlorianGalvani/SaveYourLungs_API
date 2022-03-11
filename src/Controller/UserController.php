@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Form\UserType;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -11,52 +10,67 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Security\Core\Security;
 
 #[Route('/api/user')]
 class UserController extends AbstractController
 {
     #[Route('/profile', name: 'get_user_profile', methods: ['GET'])]
-    public function index(Request $request, UserRepository $userRepository, SerializerInterface $serializer): Response
+    public function index(Request $request, UserRepository $userRepository, SerializerInterface $serializer, Security $security ): Response
     {
-        $parameters = json_decode($request->getContent(), true);
-        //TODO: Ajouter identification via token
-        $user = $userRepository->find($parameters['id']);
+        $token = $request->headers->get('Authorization');
+        $userId = $security->getUser($token);
+        $user = $userRepository->find($userId);
         $data = $serializer->serialize($user, 'json', ['groups' => 'user_profile']);
         return new Response($data);
     }
 
     #[Route('/signup', name: 'user_new', methods: ['POST'])]
-    public function signup(Request $request, EntityManagerInterface $entityManager): Response
+    public function signup(Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {
         $data = json_decode($request->getContent(), true);
+
+        $user = $userRepository->findOneBy([
+            'email' =>  $data['email'],
+        ]);
+
+        if (!is_null($user)) {
+            return new Response('User already exist');
+        }
+        $date = new \DateTime();
         $user = new User();
+        $plaintextPassword = $data['password'];
+        $hashedPassword = $passwordHasher->hashPassword(
+            $user,
+            $plaintextPassword
+        );
         $user->setFirstname($data['firstname'])
             ->setLastname($data['lastname'])
             ->setAge(intval($data['age']))
             ->setGender($data['gender'])
             ->setEmail($data['email'])
-            ->setPassword($data['password'])
-            ->setRole($data['role'])
+            ->setPassword($hashedPassword)
+            ->setRoles(['ROLE_USER'])
             ->setAvatar($data['avatar'])
-            ->setCreatedAt(new \DateTime())
-            ->setUpdatedAt(new \DateTime());
-        $form = $this->createForm(UserType::class, $user);
+            ->setCreatedAt($date)
+            ->setUpdatedAt($date);
+        $entityManager->persist($user);
+        $entityManager->flush();
 
-        $form->submit($data);
-        echo('Is submited ? : ' . $form->isSubmitted() . ' | ');
-        echo('Is valid ? : ' . $form->isValid() . ' | ' );
-        if ($form->isSubmitted() && $form->isValid()) {
-            // $data['password'] = encryptage mot de passe
-
-            $entityManager->persist($user);
-            $entityManager->flush();
-
-            return new Response('ok');
-        }
-
-        return new Response('an error occured');
+        return new Response('ok');
     }
-
+    #[Route('/checkTokenValidity', name: 'check_token_validity', methods: ['GET'])]
+    public function show(Request $request, UserRepository $userRepository, SerializerInterface $serializer, Security $security ): Response
+    {
+        $success = false;
+        $token = $request->headers->get('Authorization');
+        $userId = $security->getUser($token);
+        if ($userId) {
+            $success = true;
+        }
+        return new Response($success);
+    }
     // #[Route('/{id}', name: 'user_show', methods: ['GET'])]
     // public function show(User $user): Response
     // {

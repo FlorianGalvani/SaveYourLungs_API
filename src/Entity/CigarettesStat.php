@@ -16,7 +16,7 @@ class CigarettesStat
     private $id;
 
     #[ORM\Column(type: 'datetime')]
-    // #[Groups(['user_cigarettesStats'])]
+    #[Groups(['user_cigarettesStats'])]
     private $date;
 
     #[ORM\Column(type: 'integer')]
@@ -24,7 +24,6 @@ class CigarettesStat
     private $cigarettes;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'cigarettesStats')]
-    
     private $user;
 
     public function getId(): ?int
