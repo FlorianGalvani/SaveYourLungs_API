@@ -4,7 +4,7 @@ namespace App\Entity;
 use Symfony\Component\Serializer\Annotation\Groups;
 use App\Repository\ChallengeRepository;
 use Doctrine\ORM\Mapping as ORM;
-
+use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ChallengeRepository::class)]
 #[ORM\Table(name:"Challenges")]
 class Challenge
@@ -17,10 +17,12 @@ class Challenge
 
     #[ORM\Column(type: 'string', length: 255)]
     #[Groups(['user_challenges'])]
+    #[Assert\NotBlank]
     private $type;
 
     #[ORM\Column(type: 'string', length: 255)]
     #[Groups(['user_challenges'])]
+    #[Assert\NotBlank]
     private $state;
 
     #[ORM\Column(type: 'date')]
@@ -36,7 +38,12 @@ class Challenge
     private $expiredAt;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'challenges')]
+    #[Assert\NotBlank]
     private $user;
+
+    #[ORM\Column(type: 'integer')]
+    #[Groups(['user_challenges'])]
+    private $goal;
 
     public function getId(): ?int
     {
@@ -111,6 +118,18 @@ class Challenge
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getGoal(): ?int
+    {
+        return $this->goal;
+    }
+
+    public function setGoal(int $goal): self
+    {
+        $this->goal = $goal;
 
         return $this;
     }
