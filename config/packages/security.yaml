@@ -50,6 +50,7 @@ security:
         - { path: ^/api/docs, roles: PUBLIC_ACCESS } # Allows accessing the Swagger UI
         - { path: ^/api/user/signup, roles: PUBLIC_ACCESS }
         - { path: ^/api/user/checkTokenValidity, roles: PUBLIC_ACCESS }
+        - { path: ^/api/stats/cigarettes/stats, roles: IS_AUTHENTICATED_ANONYMOUSLY}
 
 
         # - { path: ^/admin, roles: ROLE_ADMIN }
